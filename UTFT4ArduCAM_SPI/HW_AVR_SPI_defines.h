@@ -1,5 +1,6 @@
 
 // *** Hardwarespecific defines ***
+#if !defined(TEENSYDUINO)
 #if defined (__AVR__)
 #define UTFT_cbi(reg, bitmask) *reg &= ~bitmask
 #define UTFT_sbi(reg, bitmask) *reg |= bitmask
@@ -81,5 +82,21 @@
 #define bitmapdatatype unsigned int*
 #endif
 
+#elif defined(TEENSYDUINO)
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW);
+
+ #define swap(type, i, j) {type t = i; i = j; j = t;}
+ #define fontbyte(x) cfont.font[x]
+ 
+ #if defined(__IMXRT1062__) 
+  #define sbi(reg, bitmask) delayNanoseconds(100); digitalWrite(bitmask, HIGH);
+ #define regtype volatile uint32_t
+ #define regsize uint32_t
+ #else
+  #define sbi(reg, bitmask) delayMicroseconds(1); digitalWrite(bitmask, HIGH);
+ #define regtype volatile uint8_t
+ #define regsize uint8_t
+ #endif
+#endif
 
 	

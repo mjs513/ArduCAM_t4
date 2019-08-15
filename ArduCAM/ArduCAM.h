@@ -209,10 +209,10 @@
 #if defined(__CPU_ARC__)
 	#define cbi(reg, bitmask) *reg &= ~bitmask
 	#define sbi(reg, bitmask) *reg |= bitmask
-	#define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
-	#define pulse_low(reg, bitmask) cbi(reg, bitmask); sbi(reg, bitmask);
-	#define cport(port, data) port &= data
-	#define sport(port, data) port |= data
+	//#define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
+	//#define pulse_low(reg, bitmask) cbi(reg, bitmask); sbi(reg, bitmask);
+	//#define cport(port, data) port &= data
+	//#define sport(port, data) port |= data
 	#define swap(type, i, j) {type t = i; i = j; j = t;}
 	#define fontbyte(x) pgm_read_byte(&cfont.font[x])  
 	#define regtype volatile uint32_t
@@ -235,8 +235,8 @@
 #endif
 
 #if defined(ARDUINO_ARCH_NRF52)
-    #define cbi(reg, bitmask) digitalWrite(bitmask, LOW)
-	#define sbi(reg, bitmask) digitalWrite(bitmask, HIGH)
+    #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); 
+	#define sbi(reg, bitmask)digitalWrite(bitmask, HIGH);
 	#define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
 	#define pulse_low(reg, bitmask) cbi(reg, bitmask); sbi(reg, bitmask);
 	
@@ -253,14 +253,9 @@
 #endif
 
 #if defined(TEENSYDUINO)
- //#define cbi(reg, bitmask) digitalWriteFast(bitmask, LOW)
- //#define sbi(reg, bitmask) digitalWriteFast(bitmask, HIGH)
-	#define cbi(reg, bitmask) digitalWrite(bitmask, LOW)
-  #define sbi(reg, bitmask) digitalWrite(bitmask, HIGH)
-#define pulse_high(reg, bitmask) digitalWrite(bitmask, HIGH); digitalWrite(bitmask, LOW);
-#define pulse_low(reg, bitmask) digitalWrite(bitmask, LOW); digitalWrite(bitmask, HIGH);
- #define cport(port, data) port &= data
-#define sport(port, data) port |= data
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
+ #define sbi(reg, bitmask) delayMicroseconds(1); digitalWrite(bitmask, HIGH);
+
  #define swap(type, i, j) {type t = i; i = j; j = t;}
  #define fontbyte(x) cfont.font[x]
  #if defined(__IMXRT1062__) 
@@ -270,7 +265,7 @@
  #define regtype volatile uint8_t
  #define regsize uint8_t
  #endif
- #endif
+#endif
 
 
 /****************************************************/

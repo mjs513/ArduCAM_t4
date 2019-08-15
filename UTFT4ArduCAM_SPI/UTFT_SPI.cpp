@@ -94,16 +94,36 @@ UTFT::UTFT(int CS)
 	//pinMode(CS,OUTPUT);
 }
 
+#if defined(TEENSYDUINO)
 int UTFT::bus_write(int16_t address, int16_t value) 
 {
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
   UTFT_cbi(P_CS, B_CS);
-  delayMicroseconds(1);
   SPI.transfer(address);
   SPI.transfer(value);
-  delayMicroseconds(1);
   UTFT_sbi(P_CS, B_CS);
   SPI.endTransaction();
+  return 1;
+}
+
+int UTFT::bus_read(int16_t address) 
+{
+  uint8_t value = 0;
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+  UTFT_cbi(P_CS, B_CS);
+  SPI.transfer(address);
+  value = SPI.transfer(0x00);
+  UTFT_sbi(P_CS, B_CS);
+  SPI.endTransaction();
+  return value;
+}
+#else
+int UTFT::bus_write(int16_t address, int16_t value) 
+{
+  UTFT_cbi(P_CS, B_CS);
+  SPI.transfer(address);
+  SPI.transfer(value);
+  UTFT_sbi(P_CS, B_CS);
   return 1;
 }
 
@@ -116,6 +136,7 @@ int UTFT::bus_read(int16_t address)
   UTFT_sbi(P_CS, B_CS);
   return value;
 }
+#endif
 
 void UTFT::LCD_Write_COM(char VL)  
 {   

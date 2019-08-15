@@ -3,6 +3,7 @@
   Copyright (C)2011-2015 ArduCAM.com. All right reserved
 
   Basic functionality of this library are based on the demo-code provided by
+  ArduCAM.com. You can find the latest version of the libraryspi at
   ArduCAM.com. You can find the latest version of the library at
   http://www.ArduCAM.com
 
@@ -716,13 +717,11 @@ void ArduCAM::set_fifo_burst()
 
 void ArduCAM::CS_HIGH(void)
 {
-	 delayMicroseconds(1);
 	 sbi(P_CS, B_CS);	
 }
 void ArduCAM::CS_LOW(void)
 {
 	 cbi(P_CS, B_CS);
-	 delayMicroseconds(1);	
 }
 
 uint8_t ArduCAM::read_fifo(void)
