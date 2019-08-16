@@ -10,8 +10,7 @@
 // This program requires the ArduCAM V3.0.0 (or above) library and Rev.C ArduCAM shield
 // and use Arduino IDE 1.5.2 compiler
 
-#include <UTFT_SPI.h>
-#include <SD.h>
+//#include <UTFT_SPI.h>
 #include <Wire.h>
 #include <ArduCAM.h>
 #include <SPI.h>
@@ -21,7 +20,6 @@
 const int SPI_CS = 10;
 
 ArduCAM myCAM(OV2640, SPI_CS);
-//UTFT myGLCD(SPI_CS);
 uint8_t vid,pid;
 uint8_t temp; 
 
@@ -32,20 +30,18 @@ void setup()
   Serial.begin(115200);
   Serial.println(F("ArduCAM Start!")); 
   // set the SPI_CS as an output:
-  //pinMode(SPI_CS, OUTPUT);
-  //digitalWrite(SPI_CS, HIGH);
+  pinMode(SPI_CS, OUTPUT);
+  digitalWrite(SPI_CS, HIGH);
   // initialize SPI:
-  //SPI.begin(); 
-    
+  SPI.begin();
+#if defined(TEENSYDUINO)
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+#endif    
   //Reset the CPLD
   myCAM.write_reg(0x07, 0x80);
   delay(100);
   myCAM.write_reg(0x07, 0x00);
   delay(100);
-
-  myCAM.set_mode(MCU2LCD_MODE);
-  delay(2000);
-  //myGLCD.InitLCD();
 
   while(1){
     //Check if the camera module type is OV2640
@@ -59,10 +55,6 @@ void setup()
       Serial.println(F("OV2640 detected.")); break;
     }
   }
-
-  myCAM.set_format(JPEG);
-  myCAM.InitCAM();
-
 }
 
 void loop()
