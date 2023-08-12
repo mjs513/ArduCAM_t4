@@ -106,6 +106,8 @@
 	#include "Arduino.h"
 	#include <pins_arduino.h>
 	#include "memorysaver.h"
+    #include "Wire.h"
+    #include "SPI.h"
 #endif
 
 #if defined (__AVR__)
@@ -606,7 +608,7 @@ class ArduCAM
 {
 	public:
 	ArduCAM( void );
-	ArduCAM(byte model ,int CS, TwoWire *i2c = Wire, SPIClass *spi = SPI);
+	ArduCAM(byte model ,int CS, TwoWire *i2c = &Wire, SPIClass *spi = &SPI);
 	void InitCAM( void );
 	
 	void CS_HIGH(void);

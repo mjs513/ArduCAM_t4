@@ -123,13 +123,14 @@ ArduCAM::ArduCAM()
   sensor_model = OV7670;
   sensor_addr = 0x42;
 }
-ArduCAM::ArduCAM(byte model ,int CS, TwoWire *i2c = Wire, SPIClass *spi = SPI)
+ArduCAM::ArduCAM(byte model ,int CS, TwoWire *i2c, SPIClass *spi)
 {
     i2c_ = i2c;
-    spi_ = spi;
+    i2c_->begin();
     
-    spi_.begin();
-    spi_.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+    spi_ = spi;
+    spi_->begin();
+    spi_->beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
     
 	#if defined (RASPBERRY_PI)
 		if(CS>=0)
@@ -716,7 +717,7 @@ void ArduCAM::set_fifo_burst()
 	#if defined (RASPBERRY_PI)
 	transfer(BURST_FIFO_READ);
 	#else
-    spi_.transfer(BURST_FIFO_READ);
+    spi_->transfer(BURST_FIFO_READ);
    #endif
 		
 }
@@ -810,8 +811,8 @@ uint8_t ArduCAM::bus_write(int address,int value)
 	#if defined (RASPBERRY_PI)
 		arducam_spi_write(address | 0x80, value);
 	#else
-		spi_.transfer(address);
-		spi_.transfer(value);
+		spi_->transfer(address);
+		spi_->transfer(value);
 	#endif
 	sbi(P_CS, B_CS);
 	return 1;
@@ -828,23 +829,23 @@ uint8_t ArduCAM:: bus_read(int address)
 	#else
 		#if (defined(ESP8266) || defined(__arm__) ||defined(TEENSYDUINO))
 		#if defined(OV5642_MINI_5MP)
-		  spi_.transfer(address);
-		  value = spi_.transfer(0x00);
+		  spi_->transfer(address);
+		  value = spi_->transfer(0x00);
 		  // correction for bit rotation from readback
 		  value = (byte)(value >> 1) | (value << 7);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
 		  return value;
 		#else
-		  spi_.transfer(address);
-		  value = spi_.transfer(0x00);
+		  spi_->transfer(address);
+		  value = spi_->transfer(0x00);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
 		  return value;
 		#endif
 		#else
-		  spi_.transfer(address);
-		  value = spi_.transfer(0x00);
+		  spi_->transfer(address);
+		  value = spi_->transfer(0x00);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
 		  return value;
@@ -3067,10 +3068,10 @@ byte ArduCAM::wrSensorReg8_8(int regID, int regDat)
 	#if defined (RASPBERRY_PI)
 	  arducam_i2c_write( regID , regDat );
 	#else
-	  i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID & 0x00FF);
-	  i2c_.write(regDat & 0x00FF);
-	  if (i2c_.endTransmission())
+	  i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID & 0x00FF);
+	  i2c_->write(regDat & 0x00FF);
+	  if (i2c_->endTransmission())
 	  {
 	    return 0;
 	  }
@@ -3084,13 +3085,13 @@ byte ArduCAM::rdSensorReg8_8(uint8_t regID, uint8_t* regDat)
 	#if defined (RASPBERRY_PI) 
 		arducam_i2c_read(regID,regDat);
 	#else
-        i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID & 0x00FF);
-	  i2c_.endTransmission();
+        i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID & 0x00FF);
+	  i2c_->endTransmission();
 	
-	  i2c_.requestFrom((sensor_addr >> 1), 1);
-	  if (i2c_.available())
-	    *regDat = i2c_.read();
+	  i2c_->requestFrom((sensor_addr >> 1), 1);
+	  if (i2c_->available())
+	    *regDat = i2c_->read();
 	  delay(1);
 	#endif
 	return 1;
@@ -3102,12 +3103,12 @@ byte ArduCAM::wrSensorReg8_16(int regID, int regDat)
 	#if defined (RASPBERRY_PI) 
 		arducam_i2c_write16(regID, regDat );
 	#else
-		i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID & 0x00FF);
+		i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID & 0x00FF);
 	
-	  i2c_.write(regDat >> 8);            // sends data byte, MSB first
-	  i2c_.write(regDat & 0x00FF);
-	  if (i2c_.endTransmission())
+	  i2c_->write(regDat >> 8);            // sends data byte, MSB first
+	  i2c_->write(regDat & 0x00FF);
+	  if (i2c_->endTransmission())
 	  {
 	    return 0;
 	  }	
@@ -3121,15 +3122,15 @@ byte ArduCAM::rdSensorReg8_16(uint8_t regID, uint16_t* regDat)
   	arducam_i2c_read16(regID, regDat);
   #else
   	uint8_t temp;
-	  i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID);
-	  i2c_.endTransmission();
+	  i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID);
+	  i2c_->endTransmission();
 	
-	  i2c_.requestFrom((sensor_addr >> 1), 2);
-	  if (i2c_.available())
+	  i2c_->requestFrom((sensor_addr >> 1), 2);
+	  if (i2c_->available())
 	  {
-	    temp = i2c_.read();
-	    *regDat = (temp << 8) | i2c_.read();
+	    temp = i2c_->read();
+	    *regDat = (temp << 8) | i2c_->read();
 	  }
 	  delay(1);
 	#endif
@@ -3143,11 +3144,11 @@ byte ArduCAM::wrSensorReg16_8(int regID, int regDat)
 		arducam_i2c_word_write(regID, regDat);
 		arducam_delay_ms(1);
 	#else
-		i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID >> 8);            // sends instruction byte, MSB first
-	  i2c_.write(regID & 0x00FF);
-	  i2c_.write(regDat & 0x00FF);
-	  if (i2c_.endTransmission())
+		i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID >> 8);            // sends instruction byte, MSB first
+	  i2c_->write(regID & 0x00FF);
+	  i2c_->write(regDat & 0x00FF);
+	  if (i2c_->endTransmission())
 	  {
 	    return 0;
 	  }
@@ -3160,14 +3161,14 @@ byte ArduCAM::rdSensorReg16_8(uint16_t regID, uint8_t* regDat)
 	#if defined (RASPBERRY_PI) 
 		arducam_i2c_word_read(regID, regDat );
 	#else
-		i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID >> 8);
-	  i2c_.write(regID & 0x00FF);
-	  i2c_.endTransmission();
-	  i2c_.requestFrom((sensor_addr >> 1), 1);
-	  if (i2c_.available())
+		i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID >> 8);
+	  i2c_->write(regID & 0x00FF);
+	  i2c_->endTransmission();
+	  i2c_->requestFrom((sensor_addr >> 1), 1);
+	  if (i2c_->available())
 	  {
-	    *regDat = i2c_.read();
+	    *regDat = i2c_->read();
 	  }
 	  delay(1);
 	#endif  
@@ -3179,12 +3180,12 @@ byte ArduCAM::wrSensorReg16_16(int regID, int regDat)
 {
 	#if defined (RASPBERRY_PI)
 	#else
-	  i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID >> 8);            // sends instruction byte, MSB first
-	  i2c_.write(regID & 0x00FF);
-	  i2c_.write(regDat >> 8);            // sends data byte, MSB first
-	  i2c_.write(regDat & 0x00FF);
-	  if (i2c_.endTransmission())
+	  i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID >> 8);            // sends instruction byte, MSB first
+	  i2c_->write(regID & 0x00FF);
+	  i2c_->write(regDat >> 8);            // sends data byte, MSB first
+	  i2c_->write(regDat & 0x00FF);
+	  if (i2c_->endTransmission())
 	  {
 	    return 0;
 	  }
@@ -3199,15 +3200,15 @@ byte ArduCAM::rdSensorReg16_16(uint16_t regID, uint16_t* regDat)
 	#if defined (RASPBERRY_PI)
 	#else
 	  uint16_t temp;
-	  i2c_.beginTransmission(sensor_addr >> 1);
-	  i2c_.write(regID >> 8);
-	  i2c_.write(regID & 0x00FF);
-	  i2c_.endTransmission();
-	  i2c_.requestFrom((sensor_addr >> 1), 2);
-	  if (i2c_.available())
+	  i2c_->beginTransmission(sensor_addr >> 1);
+	  i2c_->write(regID >> 8);
+	  i2c_->write(regID & 0x00FF);
+	  i2c_->endTransmission();
+	  i2c_->requestFrom((sensor_addr >> 1), 2);
+	  if (i2c_->available())
 	  {
-	    temp = i2c_.read();
-	    *regDat = (temp << 8) | i2c_.read();
+	    temp = i2c_->read();
+	    *regDat = (temp << 8) | i2c_->read();
 	  }
 	  delay(1);
 	#endif 

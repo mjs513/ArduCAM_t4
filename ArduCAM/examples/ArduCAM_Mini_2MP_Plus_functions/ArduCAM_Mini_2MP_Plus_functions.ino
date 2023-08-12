@@ -31,15 +31,15 @@ int mode = 0;
 uint8_t start_capture = 0;
 #if defined (OV2640_MINI_2MP_PLUS)
 #if defined(__SAM3X8E__)
-  ArduCAM myCAM( OV2640, CS, Wire1 );
+  ArduCAM myCAM( OV2640, CS, &Wire1 );
 #else
-  ArduCAM myCAM( OV2640, CS );
+  ArduCAM myCAM( OV2640, CS, &Wire1, &SPI );
 #endif
 #else
 #if defined(__SAM3X8E__)
-  ArduCAM myCAM( OV5642, CS, Wire1);
+  ArduCAM myCAM( OV5642, CS, &Wire1);
 #else
-  ArduCAM myCAM( OV5642, CS, Wire, SPI );  //or just ArduCAM myCAM( OV5642, CS);
+  ArduCAM myCAM( OV5642, CS, &Wire, &SPI );  //or just ArduCAM myCAM( OV5642, CS);
 #endif
 #endif
 uint8_t read_fifo_burst(ArduCAM myCAM);
