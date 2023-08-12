@@ -190,12 +190,12 @@
 
 #endif
 
-#if defined(__arm__) || defined(ESP8266)
+#if defined(__arm__) || defined(ESP8266) || defined(TEENSYDUINO)
 	#include "Arduino.h"
 	#include "HW_AVR_SPI_defines.h"
 #endif
 
-#if defined(__CPU_ARC__) || defined(TEENSYDUINO)
+#if defined(__CPU_ARC__)
 	#include "Arduino.h"
 	#include "HW_AVR_SPI_defines.h"
 

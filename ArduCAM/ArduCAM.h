@@ -606,7 +606,7 @@ class ArduCAM
 {
 	public:
 	ArduCAM( void );
-	ArduCAM(byte model ,int CS);
+	ArduCAM(byte model ,int CS, TwoWire *i2c = Wire, SPIClass *spi = SPI);
 	void InitCAM( void );
 	
 	void CS_HIGH(void);
@@ -628,7 +628,7 @@ class ArduCAM
 	uint8_t get_bit(uint8_t addr, uint8_t bit);
 	void set_mode(uint8_t mode);
  
-  uint8_t bus_write(int address, int value);
+	uint8_t bus_write(int address, int value);
 	uint8_t bus_read(int address);	
  
 	// Write 8 bit values to 8 bit register address
@@ -640,7 +640,7 @@ class ArduCAM
 	// Write 8 bit values to 16 bit register address
 	int wrSensorRegs16_8(const struct sensor_reg*);
 	
-  // Write 16 bit values to 16 bit register address
+	// Write 16 bit values to 16 bit register address
 	int wrSensorRegs16_16(const struct sensor_reg*);
 	
 	// Read/write 8 bit value to/from 8 bit register address	
@@ -668,7 +668,7 @@ class ArduCAM
 	
 	
 	void OV2640_set_Light_Mode(uint8_t Light_Mode);
-  void OV3640_set_Light_Mode(uint8_t Light_Mode);
+	void OV3640_set_Light_Mode(uint8_t Light_Mode);
 	void OV5642_set_Light_Mode(uint8_t Light_Mode);
 	void OV5640_set_Light_Mode(uint8_t Light_Mode);
 	
@@ -680,8 +680,8 @@ class ArduCAM
 	
 	void OV2640_set_Brightness(uint8_t Brightness);
 	void OV3640_set_Brightness(uint8_t Brightness);
-  void OV5642_set_Brightness(uint8_t Brightness);
-  void OV5640_set_Brightness(uint8_t Brightness);
+	void OV5642_set_Brightness(uint8_t Brightness);
+	void OV5640_set_Brightness(uint8_t Brightness);
 	
 	void OV2640_set_Contrast(uint8_t Contrast);
 	void OV3640_set_Contrast(uint8_t Contrast);
@@ -702,14 +702,14 @@ class ArduCAM
 	void OV5642_set_hue(uint8_t degree);
 	void OV5642_set_Exposure_level(uint8_t level);
 	void OV5642_set_Sharpness(uint8_t Sharpness);
-  void OV5642_set_Mirror_Flip(uint8_t Mirror_Flip);
-  void OV5642_set_Compress_quality(uint8_t quality);
-  void OV5642_Test_Pattern(uint8_t Pattern);
+	void OV5642_set_Mirror_Flip(uint8_t Mirror_Flip);
+	void OV5642_set_Compress_quality(uint8_t quality);
+	void OV5642_Test_Pattern(uint8_t Pattern);
    
   
-  void OV5640_set_EV(uint8_t EV);
-  void OV5640_set_Night_Mode(uint8_t Night_mode);
-  void OV5640_set_Banding_Filter(uint8_t Banding_Filter);
+	void OV5640_set_EV(uint8_t EV);
+	void OV5640_set_Night_Mode(uint8_t Night_mode);
+	void OV5640_set_Banding_Filter(uint8_t Banding_Filter);
 	
 	
 	
@@ -731,6 +731,12 @@ class ArduCAM
 	byte m_fmt;
 	byte sensor_model;
 	byte sensor_addr;
+    
+
+  private:
+	TwoWire *i2c_;
+	SPIClass *spi_;
+
 };
 
 #if defined OV7660_CAM	
@@ -792,7 +798,6 @@ class ArduCAM
 #if defined MT9M034_CAM	
 	#include "mt9m034_regs.h"
 #endif
-
 
 
 #endif

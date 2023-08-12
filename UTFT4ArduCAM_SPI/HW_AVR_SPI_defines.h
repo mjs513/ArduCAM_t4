@@ -87,15 +87,16 @@
 
  #define swap(type, i, j) {type t = i; i = j; j = t;}
  #define fontbyte(x) cfont.font[x]
- 
+ #define bitmapdatatype unsigned int*
+
  #if defined(__IMXRT1062__) 
-  #define sbi(reg, bitmask) delayNanoseconds(100); digitalWrite(bitmask, HIGH);
- #define regtype volatile uint32_t
- #define regsize uint32_t
+	  #define sbi(reg, bitmask) delayNanoseconds(100); digitalWrite(bitmask, HIGH);
+	 #define regtype volatile uint32_t
+	 #define regsize uint32_t
  #else
-  #define sbi(reg, bitmask) delayMicroseconds(1); digitalWrite(bitmask, HIGH);
- #define regtype volatile uint8_t
- #define regsize uint8_t
+	  #define sbi(reg, bitmask) delayMicroseconds(1); digitalWrite(bitmask, HIGH);
+	 #define regtype volatile uint8_t
+	 #define regsize uint8_t
  #endif
 #endif
 
