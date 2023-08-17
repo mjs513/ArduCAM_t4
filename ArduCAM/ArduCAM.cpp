@@ -3,7 +3,6 @@
   Copyright (C)2011-2015 ArduCAM.com. All right reserved
 
   Basic functionality of this library are based on the demo-code provided by
-  ArduCAM.com. You can find the latest version of the libraryspi at
   ArduCAM.com. You can find the latest version of the library at
   http://www.ArduCAM.com
 
@@ -125,20 +124,16 @@ ArduCAM::ArduCAM()
 }
 ArduCAM::ArduCAM(byte model ,int CS, TwoWire *i2c, SPIClass *spi)
 {
-    i2c_ = i2c;
-    i2c_->begin();
-    
+    i2c_ = i2c;   
     spi_ = spi;
-    spi_->begin();
-    spi_->beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
-    
+
 	#if defined (RASPBERRY_PI)
 		if(CS>=0)
 		{
 			B_CS = CS;
 		}
 	#else
-		#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO))
+		#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO) ||defined(NRF52840_XXAA))
 		  B_CS = CS;
 		#else
 		  P_CS  = portOutputRegister(digitalPinToPort(CS));
@@ -328,11 +323,12 @@ void ArduCAM::InitCAM()
           wrSensorReg16_8(0x3621, 0x10);
           wrSensorReg16_8(0x3801, 0xb0);
           #if (defined(OV5642_MINI_5MP_PLUS) || (defined ARDUCAM_SHIELD_V2))
-          wrSensorReg16_8(0x4407, 0x04);
+          wrSensorReg16_8(0x4407, 0x08);
           #else
           wrSensorReg16_8(0x4407, 0x0C);
           #endif
-	 wrSensorReg16_8(0x5888, 0x00);
+	 		wrSensorReg16_8(0x5888, 0x00);
+			wrSensorReg16_8(0x5000, 0xFF); 
         }
         else
         {
@@ -3066,7 +3062,7 @@ int ArduCAM::wrSensorRegs16_16(const struct sensor_reg reglist[])
 byte ArduCAM::wrSensorReg8_8(int regID, int regDat)
 {
 	#if defined (RASPBERRY_PI)
-	  arducam_i2c_write( regID , regDat );
+		arducam_i2c_write( regID , regDat );
 	#else
 	  i2c_->beginTransmission(sensor_addr >> 1);
 	  i2c_->write(regID & 0x00FF);

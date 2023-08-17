@@ -211,10 +211,10 @@
 #if defined(__CPU_ARC__)
 	#define cbi(reg, bitmask) *reg &= ~bitmask
 	#define sbi(reg, bitmask) *reg |= bitmask
-	//#define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
-	//#define pulse_low(reg, bitmask) cbi(reg, bitmask); sbi(reg, bitmask);
-	//#define cport(port, data) port &= data
-	//#define sport(port, data) port |= data
+	#define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
+	#define pulse_low(reg, bitmask) cbi(reg, bitmask); sbi(reg, bitmask);
+	#define cport(port, data) port &= data
+	#define sport(port, data) port |= data
 	#define swap(type, i, j) {type t = i; i = j; j = t;}
 	#define fontbyte(x) pgm_read_byte(&cfont.font[x])  
 	#define regtype volatile uint32_t
@@ -255,8 +255,8 @@
 #endif
 
 #if defined(TEENSYDUINO)
- #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
- #define sbi(reg, bitmask) delayMicroseconds(1); digitalWrite(bitmask, HIGH);
+ #define cbi(reg, bitmask) digitalWriteFast(bitmask, LOW); 
+ #define sbi(reg, bitmask) digitalWriteFast(bitmask, HIGH);
 
  #define swap(type, i, j) {type t = i; i = j; j = t;}
  #define fontbyte(x) cfont.font[x]
@@ -267,6 +267,47 @@
  #define regtype volatile uint8_t
  #define regsize uint8_t
  #endif
+#endif
+
+#if defined(NRF52840_XXAA)
+
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW)
+ #define sbi(reg, bitmask) digitalWrite(bitmask, HIGH)
+
+#define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
+#define pulse_low(reg, bitmask) cbi(reg, bitmask); sbi(reg, bitmask);
+
+#define cport(port, data) port &= data
+#define sport(port, data) port |= data
+
+#define swap(type, i, j) {type t = i; i = j; j = t;}
+#define fontbyte(x) cfont.font[x]  
+
+#define regtype volatile uint32_t
+#define regsize uint32_t
+
+#define PROGMEM
+
+#if defined F
+	#undef F
+#endif
+#define F(X) (X)
+#endif
+
+#if defined (ARDUINO_ARCH_STM32)
+#define cbi(reg, bitmask) *reg &= ~bitmask
+#define sbi(reg, bitmask) *reg |= bitmask
+
+#define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
+#define pulse_low(reg, bitmask) cbi(reg, bitmask); sbi(reg, bitmask);
+
+#define cport(port, data) port &= data
+#define sport(port, data) port |= data
+
+#define swap(type, i, j) {type t = i; i = j; j = t;}
+#define fontbyte(x) cfont.font[x]
+#define regtype volatile uint32_t
+#define regsize uint32_t
 #endif
 
 
@@ -709,9 +750,9 @@ class ArduCAM
 	void OV5642_Test_Pattern(uint8_t Pattern);
    
   
-	void OV5640_set_EV(uint8_t EV);
-	void OV5640_set_Night_Mode(uint8_t Night_mode);
-	void OV5640_set_Banding_Filter(uint8_t Banding_Filter);
+  void OV5640_set_EV(uint8_t EV);
+  void OV5640_set_Night_Mode(uint8_t Night_mode);
+  void OV5640_set_Banding_Filter(uint8_t Banding_Filter);
 	
 	
 	
@@ -800,6 +841,7 @@ class ArduCAM
 #if defined MT9M034_CAM	
 	#include "mt9m034_regs.h"
 #endif
+
 
 
 #endif
