@@ -255,8 +255,6 @@
 #endif
 
 #if defined(TEENSYDUINO)
- #define cbi(reg, bitmask) digitalWriteFast(bitmask, LOW); 
- #define sbi(reg, bitmask) digitalWriteFast(bitmask, HIGH);
 
  #define swap(type, i, j) {type t = i; i = j; j = t;}
  #define fontbyte(x) cfont.font[x]
@@ -267,6 +265,13 @@
  #define regtype volatile uint8_t
  #define regsize uint8_t
  #endif
+ #if (defined(ARDUCAM_SHIELD_REVC) || defined(ARDUCAM_SHIELD_V2))
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
+ #define sbi(reg, bitmask) delayMicroseconds(2); digitalWrite(bitmask, HIGH);
+ #else
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW);
+ #define sbi(reg, bitmask)  digitalWrite(bitmask, HIGH);
+ #endif 
 #endif
 
 #if defined(NRF52840_XXAA)
