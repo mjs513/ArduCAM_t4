@@ -31,13 +31,13 @@ int mode = 0;
 uint8_t start_capture = 0;
 #if defined (OV2640_MINI_2MP_PLUS)
 #if defined(__SAM3X8E__)
-  ArduCAM myCAM( OV2640, CS, &Wire1 );
+  ArduCAM myCAM( OV2640, CS, &Wire );
 #else
-  ArduCAM myCAM( OV2640, CS, &Wire1, &SPI );
+  ArduCAM myCAM( OV2640, CS, &Wire, &SPI );
 #endif
 #else
 #if defined(__SAM3X8E__)
-  ArduCAM myCAM( OV5642, CS, &Wire1);
+  ArduCAM myCAM( OV5642, CS, &Wire);
 #else
   ArduCAM myCAM( OV5642, CS, &Wire, &SPI );  //or just ArduCAM myCAM( OV5642, CS);
 #endif
@@ -54,6 +54,9 @@ uint8_t temp;
   Serial.begin(921600);
 #endif
 Serial.println(F("ACK CMD ArduCAM Start! END"));
+
+Wire.begin();
+SPI.begin();
 // set the CS as an output:
 pinMode(CS, OUTPUT);
 digitalWrite(CS, HIGH);
@@ -547,6 +550,7 @@ uint8_t read_fifo_burst(ArduCAM myCAM)
     if (is_header == true)
     {
       Serial.write(temp);
+      delayMicroseconds(2);
     }
     else if ((temp == 0xD8) & (temp_last == 0xFF))
     {
