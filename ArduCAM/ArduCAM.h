@@ -255,9 +255,24 @@
 #endif
 
 #if defined(TEENSYDUINO)
+ #if (defined(ARDUCAM_SHIELD_REVC) || defined(ARDUCAM_SHIELD_V2))
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
+ #define sbi(reg, bitmask) delayMicroseconds(2); digitalWrite(bitmask, HIGH);
+ #elif defined(ARDUINO_TEENSY36) || defined(__IMXRT1062__)
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
+ #define sbi(reg, bitmask) delayMicroseconds(2); digitalWrite(bitmask, HIGH);
+ #elif defined(ARDUINO_TEENSY35) || defined(ARDUINO_TEENSY32)
+ #define cbi(reg, bitmask) digitalWriteFast(bitmask, LOW); 
+ #define sbi(reg, bitmask) digitalWriteFast(bitmask, HIGH);
+ #endif 
+ 
+ #define cport(port, data) port &= data
+ #define sport(port, data) port |= data
 
  #define swap(type, i, j) {type t = i; i = j; j = t;}
+ 
  #define fontbyte(x) cfont.font[x]
+ 
  #if defined(__IMXRT1062__) 
  #define regtype volatile uint32_t
  #define regsize uint32_t
@@ -265,13 +280,9 @@
  #define regtype volatile uint8_t
  #define regsize uint8_t
  #endif
- #if (defined(ARDUCAM_SHIELD_REVC) || defined(ARDUCAM_SHIELD_V2))
- #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
- #define sbi(reg, bitmask) delayMicroseconds(2); digitalWrite(bitmask, HIGH);
- #else
- #define cbi(reg, bitmask) digitalWrite(bitmask, LOW);
- #define sbi(reg, bitmask)  digitalWrite(bitmask, HIGH);
- #endif 
+ 
+ 
+
 #endif
 
 #if defined(NRF52840_XXAA)

@@ -687,9 +687,9 @@ uint32_t ArduCAM::read_fifo_length(void)
 {
 	uint32_t len1,len2,len3,length=0;
 	len1 = read_reg(FIFO_SIZE1);
-  len2 = read_reg(FIFO_SIZE2);
-  len3 = read_reg(FIFO_SIZE3) & 0x7f;
-  length = ((len3 << 16) | (len2 << 8) | len1) & 0x07fffff;
+	len2 = read_reg(FIFO_SIZE2);
+	len3 = read_reg(FIFO_SIZE3) & 0x7f;
+	length = ((len3 << 16) | (len2 << 8) | len1) & 0x07fffff;
 	return length;	
 }
 
@@ -803,6 +803,9 @@ void ArduCAM::set_mode(uint8_t mode)
 
 uint8_t ArduCAM::bus_write(int address,int value)
 {	
+	#if defined(SPI_HAS_TRANSACTION)
+	spi_->beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+	#endif
 	cbi(P_CS, B_CS);
 	#if defined (RASPBERRY_PI)
 		arducam_spi_write(address | 0x80, value);
@@ -811,16 +814,25 @@ uint8_t ArduCAM::bus_write(int address,int value)
 		spi_->transfer(value);
 	#endif
 	sbi(P_CS, B_CS);
+	#if defined(SPI_HAS_TRANSACTION)
+	spi_->endTransaction();
+	#endif
 	return 1;
 }
 
 uint8_t ArduCAM:: bus_read(int address)
 {
+	#if defined(SPI_HAS_TRANSACTION)
+	spi_->beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+	#endif
 	uint8_t value;
 	cbi(P_CS, B_CS);
 	#if defined (RASPBERRY_PI)
 		value = arducam_spi_read(address & 0x7F);
 		sbi(P_CS, B_CS);
+		#if defined(SPI_HAS_TRANSACTION)
+		spi_->endTransaction();
+		#endif
 		return value;	
 	#else
 		#if (defined(ESP8266) || defined(__arm__) ||defined(TEENSYDUINO))
@@ -831,12 +843,18 @@ uint8_t ArduCAM:: bus_read(int address)
 		  value = (byte)(value >> 1) | (value << 7);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
+		  #if defined(SPI_HAS_TRANSACTION)
+		  spi_->endTransaction();
+		  #endif
 		  return value;
 		#else
 		  spi_->transfer(address);
 		  value = spi_->transfer(0x00);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
+		  #if defined(SPI_HAS_TRANSACTION)
+		  spi_->endTransaction();
+		  #endif
 		  return value;
 		#endif
 		#else
@@ -844,6 +862,9 @@ uint8_t ArduCAM:: bus_read(int address)
 		  value = spi_->transfer(0x00);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
+		  #if defined(SPI_HAS_TRANSACTION)
+		  spi_->endTransaction();
+		  #endif
 		  return value;
 		#endif
 #endif
@@ -953,7 +974,7 @@ void ArduCAM::OV5642_set_RAW_size(uint8_t size)
 void ArduCAM::OV5642_set_JPEG_size(uint8_t size)
 {
 #if defined(OV5642_CAM) || defined(OV5642_CAM_BIT_ROTATION_FIXED)|| defined(OV5642_MINI_5MP) || defined (OV5642_MINI_5MP_PLUS)
-  uint8_t reg_val;
+  uint8_t reg_val = 0;
 
   switch (size)
   {
@@ -2729,15 +2750,15 @@ void ArduCAM::set_format(byte fmt)
 	void ArduCAM::OV5642_set_Mirror_Flip(uint8_t Mirror_Flip)
 	{
 	#if defined(OV5642_CAM) || defined(OV5642_CAM_BIT_ROTATION_FIXED)|| defined(OV5642_MINI_5MP) || defined (OV5642_MINI_5MP_PLUS)	
-			 uint8_t reg_val;
+			 uint8_t reg_val = 0; 
 	switch(Mirror_Flip)
 		{
 			case MIRROR:
 				rdSensorReg16_8(0x3818,&reg_val);
 				reg_val = reg_val|0x00;
 				reg_val = reg_val&0x9F;
-			wrSensorReg16_8(0x3818 ,reg_val);
-			rdSensorReg16_8(0x3621,&reg_val);
+				wrSensorReg16_8(0x3818 ,reg_val);
+				rdSensorReg16_8(0x3621,&reg_val);
 				reg_val = reg_val|0x20;
 				wrSensorReg16_8(0x3621, reg_val );
 			
@@ -2819,7 +2840,7 @@ void ArduCAM::set_format(byte fmt)
 	void ArduCAM::OV5640_set_Night_Mode(uint8_t Night_mode)
 	{
 	#if (defined (OV5640_CAM)||defined (OV5640_MINI_5MP_PLUS))
-			uint8_t reg_val;
+			uint8_t reg_val = 0; 
 			switch(Night_mode)
 			{
 					case Night_Mode_On:
@@ -2840,7 +2861,7 @@ void ArduCAM::set_format(byte fmt)
 	void ArduCAM::OV5640_set_Banding_Filter(uint8_t Banding_Filter)
 	{
 		#if (defined (OV5640_CAM)||defined (OV5640_MINI_5MP_PLUS))
-			uint8_t reg_val;
+			uint8_t reg_val = 0; 
 			switch(Banding_Filter)
 			{
 					case Off:
@@ -2948,7 +2969,7 @@ int ArduCAM::wrSensorRegs8_8(const struct sensor_reg reglist[])
 	#if defined (RASPBERRY_PI)
 		arducam_i2c_write_regs(reglist);
 	#else
-		int err = 0;
+      int err = 0;
 	  uint16_t reg_addr = 0;
 	  uint16_t reg_val = 0;
 	  const struct sensor_reg *next = reglist;
@@ -2972,7 +2993,7 @@ int ArduCAM::wrSensorRegs8_16(const struct sensor_reg reglist[])
 	#if defined (RASPBERRY_PI)
 		arducam_i2c_write_regs16(reglist);
 	#else
-		int err = 0;
+	  int err = 0;
 	  unsigned int reg_addr, reg_val;
 	  const struct sensor_reg *next = reglist;
 	
@@ -3003,8 +3024,8 @@ int ArduCAM::wrSensorRegs16_8(const struct sensor_reg reglist[])
 	#if defined (RASPBERRY_PI)
 		arducam_i2c_write_word_regs(reglist);
 	#else
-		int err = 0;
-	  unsigned int reg_addr;
+	  int err = 0;
+	  unsigned int reg_addr = 0;
 	  unsigned char reg_val;
 	  const struct sensor_reg *next = reglist;
 	

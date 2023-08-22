@@ -26,14 +26,15 @@ const char bmp_header[BMPIMAGEOFFSET] PROGMEM = {
   0x00, 0x00
 };
 // set pin 7 as the slave select for the digital pot:
-const int CS = 7;
+const int CS = 10;
 bool is_header = false;
 int mode = 0;
 uint8_t start_capture = 0;
 ArduCAM myCAM(OV5642, CS, &Wire, &SPI);
 uint8_t read_fifo_burst(ArduCAM myCAM);
 
-uint16_t image_delay = 500;  //delay in milliseconds
+
+#define SpiConfig SPISettings(8000000, MSBFIRST, SPI_MODE0)
 
 void setup() {
   // put your setup code here, to run once:
@@ -42,7 +43,6 @@ void setup() {
 
   Wire.begin();
   SPI.begin();
-  SPI.beginTransaction(SPISettings(6000000, MSBFIRST, SPI_MODE0));
   Serial.begin(921600);
   delay(5000);
   Serial.println(F("ACK CMD ArduCAM Start! END"));
@@ -103,21 +103,18 @@ void loop() {
     switch (temp) {
       case 0:
         myCAM.OV5642_set_JPEG_size(OV5642_320x240);
-        image_delay = 500;
         delay(1000);
         Serial.println(F("ACK CMD switch to OV5642_320x240 END"));
         temp = 0xff;
         break;
       case 1:
         myCAM.OV5642_set_JPEG_size(OV5642_640x480);
-        image_delay = 500;
         delay(1000);
         Serial.println(F("ACK CMD switch to OV5642_640x480 END"));
         temp = 0xff;
         break;
       case 2:
         myCAM.OV5642_set_JPEG_size(OV5642_1024x768);
-        image_delay = 2000;
         delay(1000);
         Serial.println(F("ACK CMD switch to OV5642_1024x768 END"));
         temp = 0xff;
@@ -125,28 +122,24 @@ void loop() {
       case 3:
         temp = 0xff;
         myCAM.OV5642_set_JPEG_size(OV5642_1280x960);
-        image_delay = 2000;
         delay(1000);
         Serial.println(F("ACK CMD switch to OV5642_1280x960 END"));
         break;
       case 4:
         temp = 0xff;
         myCAM.OV5642_set_JPEG_size(OV5642_1600x1200);
-        image_delay = 2000;
         delay(1000);
         Serial.println(F("ACK CMD switch to OV5642_1600x1200 END"));
         break;
       case 5:
         temp = 0xff;
         myCAM.OV5642_set_JPEG_size(OV5642_2048x1536);
-        image_delay = 2000;
         delay(1000);
         Serial.println(F("ACK CMD switch to OV5642_2048x1536 END"));
         break;
       case 6:
         temp = 0xff;
         myCAM.OV5642_set_JPEG_size(OV5642_2592x1944);
-        image_delay = 2000;
         delay(1000);
         Serial.println(F("ACK CMD switch to OV5642_2592x1944 END"));
         break;
@@ -614,8 +607,6 @@ void loop() {
       //Clear the capture done flag
       myCAM.clear_fifo_flag();
     }
-    delay(image_delay);
-
   } else if (mode == 2) {
     while (1) {
       temp = Serial.read();
@@ -1053,7 +1044,9 @@ void loop() {
           start_capture = 2;
           continue;
         }
-        //SPI.beginTransaction(SPISettings(12000000, MSBFIRST, SPI_MODE0));
+        #if defined(SPI_HAS_TRANSACTION)
+        SPI.beginTransaction(SpiConfig);
+        #endif
         myCAM.CS_LOW();
         myCAM.set_fifo_burst();  //Set fifo burst mode
         temp = SPI.transfer(0x00);
@@ -1074,6 +1067,9 @@ void loop() {
           delayMicroseconds(15);
         }
         myCAM.CS_HIGH();
+        #if defined(SPI_HAS_TRANSACTION)
+        SPI.endTransaction();
+        #endif
         myCAM.clear_fifo_flag();
         start_capture = 2;
         is_header = false;
@@ -1105,7 +1101,9 @@ void loop() {
         myCAM.clear_fifo_flag();
         return;
       }
-      //SPI.beginTransaction(SPISettings(12000000, MSBFIRST, SPI_MODE0));
+      #if defined(SPI_HAS_TRANSACTION)
+      SPI.beginTransaction(SpiConfig);
+      #endif
       myCAM.CS_LOW();
       myCAM.set_fifo_burst();  //Set fifo burst mode
 
@@ -1114,7 +1112,7 @@ void loop() {
       for (temp = 0; temp < BMPIMAGEOFFSET; temp++) {
         Serial.write(pgm_read_byte(&bmp_header[temp]));
       }
-      //SPI.transfer(0x00);
+      SPI.transfer(0x00);
       char VH, VL;
       int i = 0, j = 0;
       for (i = 0; i < 240; i++) {
@@ -1132,11 +1130,12 @@ void loop() {
       Serial.write(0xBB);
       Serial.write(0xCC);
       myCAM.CS_HIGH();
-
+		  #if defined(SPI_HAS_TRANSACTION)
+		  SPI.endTransaction();
+		  #endif
       //Clear the capture done flag
       myCAM.clear_fifo_flag();
     }
-    delay(image_delay);
   }
 }
 uint8_t read_fifo_burst(ArduCAM myCAM) {
@@ -1154,6 +1153,9 @@ uint8_t read_fifo_burst(ArduCAM myCAM) {
     Serial.println(F("ACK CMD Size is 0. END"));
     return 0;
   }
+	#if defined(SPI_HAS_TRANSACTION)
+	SPI.beginTransaction(SpiConfig);
+	#endif
   myCAM.CS_LOW();
   myCAM.set_fifo_burst();  //Set fifo burst mode
   temp = SPI.transfer(0x00);
@@ -1163,6 +1165,7 @@ uint8_t read_fifo_burst(ArduCAM myCAM) {
     temp = SPI.transfer(0x00);
     if (is_header == true) {
       Serial.write(temp);
+      delayMicroseconds(4);
     } else if ((temp == 0xD8) & (temp_last == 0xFF)) {
       is_header = true;
       Serial.println(F("ACK IMG END"));
@@ -1171,10 +1174,12 @@ uint8_t read_fifo_burst(ArduCAM myCAM) {
     }
     if ((temp == 0xD9) && (temp_last == 0xFF))  //If find the end ,break while,
       break;
-    //delayMicroseconds(15);
+    delayMicroseconds(15);
   }
   myCAM.CS_HIGH();
-  
+  #if defined(SPI_HAS_TRANSACTION)
+  SPI.endTransaction();
+  #endif
   is_header = false;
   return 1;
 }
