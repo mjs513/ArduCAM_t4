@@ -133,7 +133,7 @@ ArduCAM::ArduCAM(byte model ,int CS, TwoWire *i2c, SPIClass *spi)
 			B_CS = CS;
 		}
 	#else
-		#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO) ||defined(NRF52840_XXAA))
+#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO) ||defined(NRF52840_XXAA)) || defined(ARDUINO_ARCH_RENESAS_UNO)
 		  B_CS = CS;
 		#else
 		  P_CS  = portOutputRegister(digitalPinToPort(CS));
@@ -835,7 +835,7 @@ uint8_t ArduCAM:: bus_read(int address)
 		#endif
 		return value;	
 	#else
-		#if (defined(ESP8266) || defined(__arm__) ||defined(TEENSYDUINO))
+		#if (defined(ESP8266) || defined(__arm__) ||defined(TEENSYDUINO)) || defined(ARDUINO_ARCH_RENESAS_UNO)
 		#if defined(OV5642_MINI_5MP)
 		  spi_->transfer(address);
 		  value = spi_->transfer(0x00);
@@ -2979,7 +2979,7 @@ int ArduCAM::wrSensorRegs8_8(const struct sensor_reg reglist[])
 	    reg_val = pgm_read_word(&next->val);
 	    err = wrSensorReg8_8(reg_addr, reg_val);
 	    next++;
-		#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO))
+		#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO)) || defined(ARDUINO_ARCH_RENESAS_UNO)
 		    yield();
 		#endif
 	  }
@@ -3043,7 +3043,7 @@ int ArduCAM::wrSensorRegs16_8(const struct sensor_reg reglist[])
 	    //if (!err)
 	    //return err;
 	    next++;
-		#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO))
+		#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO)) || defined(ARDUINO_ARCH_RENESAS_UNO)
 			yield();
 		#endif
 	  }
@@ -3069,7 +3069,7 @@ int ArduCAM::wrSensorRegs16_16(const struct sensor_reg reglist[])
 	    next++;
 	    reg_addr = pgm_read_word(&next->reg);
 	    reg_val = pgm_read_word(&next->val);
-			#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO))
+			#if (defined(ESP8266)||defined(ESP32)||defined(TEENSYDUINO)) || defined(ARDUINO_ARCH_RENESAS_UNO)
 			    yield();
 			#endif
 	  }

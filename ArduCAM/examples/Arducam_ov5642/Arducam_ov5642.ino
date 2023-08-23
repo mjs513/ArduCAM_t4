@@ -26,15 +26,20 @@ const char bmp_header[BMPIMAGEOFFSET] PROGMEM = {
   0x00, 0x00
 };
 // set pin 7 as the slave select for the digital pot:
-const int CS = 10;
+const uint8_t slave_select = 10;
 bool is_header = false;
 int mode = 0;
 uint8_t start_capture = 0;
-ArduCAM myCAM(OV5642, CS, &Wire, &SPI);
+ArduCAM myCAM(OV5642, slave_select, &Wire, &SPI);
 uint8_t read_fifo_burst(ArduCAM myCAM);
 
-
+#if defined(ARDUINO_UNOR4_WIFI)
+#define SpiConfig SPISettings(6000000, MSBFIRST, SPI_MODE0)
+#elif defined(ARDUINO_UNOR4_MINIMA)
+#define SpiConfig SPISettings(4000000, MSBFIRST, SPI_MODE0)
+#else
 #define SpiConfig SPISettings(8000000, MSBFIRST, SPI_MODE0)
+#endif
 
 void setup() {
   // put your setup code here, to run once:
@@ -47,8 +52,8 @@ void setup() {
   delay(5000);
   Serial.println(F("ACK CMD ArduCAM Start! END"));
   // set the CS as an output:
-  pinMode(CS, OUTPUT);
-  digitalWrite(CS, HIGH);
+  pinMode(slave_select, OUTPUT);
+  digitalWrite(slave_select, HIGH);
 
   //Reset the CPLD
   myCAM.write_reg(0x07, 0x80);
@@ -1165,7 +1170,11 @@ uint8_t read_fifo_burst(ArduCAM myCAM) {
     temp = SPI.transfer(0x00);
     if (is_header == true) {
       Serial.write(temp);
+      #if defined(ARDUINO_ARCH_RENESAS_UNO)
+      delayMicroseconds(6);
+      #else
       delayMicroseconds(4);
+      #endif
     } else if ((temp == 0xD8) & (temp_last == 0xFF)) {
       is_header = true;
       Serial.println(F("ACK IMG END"));

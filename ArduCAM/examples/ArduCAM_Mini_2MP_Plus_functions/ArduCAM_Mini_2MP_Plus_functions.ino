@@ -25,24 +25,30 @@ const char bmp_header[BMPIMAGEOFFSET] PROGMEM =
   0x00, 0x00
 };
 // set pin 7 as the slave select for the digital pot:
-const int CS = 7;
+const int slave_select = 10;
 bool is_header = false;
 int mode = 0;
 uint8_t start_capture = 0;
 #if defined (OV2640_MINI_2MP_PLUS)
 #if defined(__SAM3X8E__)
-  ArduCAM myCAM( OV2640, CS, &Wire );
+  ArduCAM myCAM( OV2640, slave_select, &Wire );
 #else
-  ArduCAM myCAM( OV2640, CS, &Wire, &SPI );
+  ArduCAM myCAM( OV2640, slave_select, &Wire, &SPI );
 #endif
 #else
 #if defined(__SAM3X8E__)
-  ArduCAM myCAM( OV5642, CS, &Wire);
+  ArduCAM myCAM( OV5642, slave_select, &Wire);
 #else
-  ArduCAM myCAM( OV5642, CS, &Wire, &SPI );  //or just ArduCAM myCAM( OV5642, CS);
+  ArduCAM myCAM( OV5642, slave_select, &Wire, &SPI );  //or just ArduCAM myCAM( OV5642, CS);
 #endif
 #endif
 uint8_t read_fifo_burst(ArduCAM myCAM);
+
+#if defined(ARDUINO_ARCH_RENESAS_UNO)
+#define SpiConfig SPISettings(4000000, MSBFIRST, SPI_MODE0)
+#else
+#define SpiConfig SPISettings(8000000, MSBFIRST, SPI_MODE0)
+#endif
 
 void setup() {
 // put your setup code here, to run once:
@@ -58,8 +64,8 @@ Serial.println(F("ACK CMD ArduCAM Start! END"));
 Wire.begin();
 SPI.begin();
 // set the CS as an output:
-pinMode(CS, OUTPUT);
-digitalWrite(CS, HIGH);
+pinMode(slave_select, OUTPUT);
+digitalWrite(slave_select, HIGH);
 
 //Reset the CPLD
 myCAM.write_reg(0x07, 0x80);
@@ -122,6 +128,7 @@ myCAM.clear_fifo_flag();
 myCAM.write_reg(ARDUCHIP_FRAMES,0x00);
 #endif
 }
+
 void loop() {
 // put your main code here, to run repeatedly:
 uint8_t temp = 0xff, temp_last = 0;
@@ -433,6 +440,9 @@ else if (mode == 2)
         start_capture = 2;
         continue;
       }
+      #if defined(SPI_HAS_TRANSACTION)
+      SPI.beginTransaction(SpiConfig);
+      #endif
       myCAM.CS_LOW();
       myCAM.set_fifo_burst();//Set fifo burst mode
       temp =  SPI.transfer(0x00);
@@ -457,6 +467,9 @@ else if (mode == 2)
         delayMicroseconds(15);
       }
       myCAM.CS_HIGH();
+      #if defined(SPI_HAS_TRANSACTION)
+      SPI.endTransaction();
+      #endif
       myCAM.clear_fifo_flag();
       start_capture = 2;
       is_header = false;
@@ -492,6 +505,9 @@ else if (mode == 3)
       myCAM.clear_fifo_flag();
       return;
     }
+    #if defined(SPI_HAS_TRANSACTION)
+    SPI.beginTransaction(SpiConfig);
+    #endif
     myCAM.CS_LOW();
     myCAM.set_fifo_burst();//Set fifo burst mode
     
@@ -518,6 +534,9 @@ else if (mode == 3)
     Serial.write(0xBB);
     Serial.write(0xCC);
     myCAM.CS_HIGH();
+    #if defined(SPI_HAS_TRANSACTION)
+    SPI.endTransaction();
+    #endif
     //Clear the capture done flag
     myCAM.clear_fifo_flag();
   }
@@ -539,6 +558,9 @@ uint8_t read_fifo_burst(ArduCAM myCAM)
     Serial.println(F("ACK CMD Size is 0. END"));
     return 0;
   }
+  #if defined(SPI_HAS_TRANSACTION)
+  SPI.beginTransaction(SpiConfig);
+  #endif
   myCAM.CS_LOW();
   myCAM.set_fifo_burst();//Set fifo burst mode
   temp =  SPI.transfer(0x00);
@@ -550,7 +572,12 @@ uint8_t read_fifo_burst(ArduCAM myCAM)
     if (is_header == true)
     {
       Serial.write(temp);
+      #if defined(ARDUINO_TEENSY35)
+      delayMicroseconds(6);
+      #elif defined(ARDUINO_ARCH_RENESAS_UNO)
       delayMicroseconds(2);
+      #endif
+
     }
     else if ((temp == 0xD8) & (temp_last == 0xFF))
     {
@@ -564,6 +591,9 @@ uint8_t read_fifo_burst(ArduCAM myCAM)
     delayMicroseconds(15);
   }
   myCAM.CS_HIGH();
+  #if defined(SPI_HAS_TRANSACTION)
+  SPI.endTransaction();
+  #endif
   is_header = false;
   return 1;
 }
