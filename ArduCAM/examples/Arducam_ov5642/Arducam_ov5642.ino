@@ -33,7 +33,7 @@ uint8_t start_capture = 0;
 ArduCAM myCAM(OV5642, slave_select, &Wire, &SPI);
 uint8_t read_fifo_burst(ArduCAM myCAM);
 
-#if defined(ARDUINO_UNOR4_WIFI)
+#if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_TEENSY35) || defined(__IMXRT1062__)
 #define SpiConfig SPISettings(6000000, MSBFIRST, SPI_MODE0)
 #elif defined(ARDUINO_UNOR4_MINIMA)
 #define SpiConfig SPISettings(4000000, MSBFIRST, SPI_MODE0)
@@ -1162,6 +1162,9 @@ uint8_t read_fifo_burst(ArduCAM myCAM) {
 	SPI.beginTransaction(SpiConfig);
 	#endif
   myCAM.CS_LOW();
+  #if defined(__IMXRT1062__) || defined(ARDUINO_TEENSY35)
+   delayMicroseconds(3); 
+  #endif
   myCAM.set_fifo_burst();  //Set fifo burst mode
   temp = SPI.transfer(0x00);
   length--;
@@ -1185,10 +1188,14 @@ uint8_t read_fifo_burst(ArduCAM myCAM) {
       break;
     delayMicroseconds(15);
   }
+  #if defined(__IMXRT1062__) || defined(ARDUINO_TEENSY35)
+   delayMicroseconds(3); 
+  #endif
   myCAM.CS_HIGH();
   #if defined(SPI_HAS_TRANSACTION)
   SPI.endTransaction();
   #endif
+  //Serial.flush();
   is_header = false;
   return 1;
 }

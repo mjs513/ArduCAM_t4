@@ -258,12 +258,15 @@
  #if (defined(ARDUCAM_SHIELD_REVC) || defined(ARDUCAM_SHIELD_V2))
  #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
  #define sbi(reg, bitmask) delayMicroseconds(2); digitalWrite(bitmask, HIGH);
- #elif defined(ARDUINO_TEENSY36) || defined(__IMXRT1062__)
+ #elif defined(__IMXRT1062__)
  #define cbi(reg, bitmask) digitalWrite(bitmask, LOW); delayMicroseconds(1);
  #define sbi(reg, bitmask) delayMicroseconds(2); digitalWrite(bitmask, HIGH);
  #elif defined(ARDUINO_TEENSY35) || defined(ARDUINO_TEENSY32)
  #define cbi(reg, bitmask) digitalWriteFast(bitmask, LOW); 
  #define sbi(reg, bitmask) digitalWriteFast(bitmask, HIGH);
+ #elif defined(ARDUINO_TEENSY36)
+ #define cbi(reg, bitmask) digitalWrite(bitmask, LOW);
+ #define sbi(reg, bitmask) digitalWrite(bitmask, HIGH);
  #endif 
  
  #define pulse_high(reg, bitmask) sbi(reg, bitmask); cbi(reg, bitmask);
